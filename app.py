@@ -86,10 +86,15 @@ with tab1:
     #st.header("New Reading")
     
     with st.form("input_form", clear_on_submit=True):
-        date = st.date_input("Date", datetime.date.today())
-        # default time to current CET (Europe/Prague) regardless of server tz
-        cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
-        time = st.time_input("Time", cet_now.time())
+        # date and time on same row to save vertical space
+        col1, col2 = st.columns(2)
+        with col1:
+            date = st.date_input("Date", datetime.date.today())
+        with col2:
+            # default time to current CET (Europe/Prague) regardless of server tz
+            cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
+            time = st.time_input("Time", cet_now.time())
+
         volume1 = st.number_input("Volume 1 (L/min)", min_value=0, max_value=1000, step=1)
         volume2 = st.number_input("Volume 2 (L/min)", min_value=0, max_value=1000, step=1)
         volume3 = st.number_input("Volume 3 (L/min)", min_value=0, max_value=1000, step=1)

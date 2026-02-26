@@ -1,17 +1,47 @@
 import streamlit as st
 import pandas as pd
 import datetime
-from streamlit_gsheets import GSheetsConnection
+import sqlite3
 
 # App Title & Icon
 st.set_page_config(page_title="LungLog", page_icon="🫁")
 
 st.title("🫁 LungLog: Asthma Tracker")
 
-# Connect to Google Sheets
-conn = st.connection("gsheets", type=GSheetsConnection)
-# Load existing data
-existing_data = conn.read(worksheet="Sheet1")
+# ----------
+# local storage
+# ----------
+# use a lightweight SQLite database in the workspace directory so that
+# data persists between Streamlit sessions without any cloud setup.
+DB_PATH = "data.db"
+_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+
+# create table if it doesn't exist
+with _conn:
+    _conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS readings (
+            Date TEXT,
+            Volume REAL,
+            Feeling TEXT
+        )
+        """
+    )
+
+
+def _load_data():
+    try:
+        df = pd.read_sql_query("SELECT * FROM readings ORDER BY Date", _conn)
+    except Exception:
+        df = pd.DataFrame(columns=["Date", "Volume", "Feeling"])
+    return df
+
+
+def _save_data(df: pd.DataFrame):
+    # overwrite entire table for simplicity
+    df.to_sql("readings", _conn, index=False, if_exists="replace")
+
+existing_data = _load_data()
 
 # --- TWO TAB LAYOUT ---
 tab1, tab2 = st.tabs(["📝 Log Entry", "📈 Trends"])
@@ -31,8 +61,8 @@ with tab1:
             new_entry = pd.DataFrame([{"Date": str(date), "Volume": volume, "Feeling": feeling}])
             updated_df = pd.concat([existing_data, new_entry], ignore_index=True)
             
-            # Update Google Sheet
-            conn.update(worksheet="Sheet1", data=updated_df)
+            # Save into local SQLite database
+            _save_data(updated_df)
             st.success("Data logged successfully!")
 
 with tab2:

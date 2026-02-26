@@ -105,9 +105,10 @@ with tab1:
         cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
         dt = st.datetime_input("Date & time", value=cet_now)
 
-        volume1 = st.number_input("Volume 1 (L/min)", min_value=0, max_value=1000, step=1)
-        volume2 = st.number_input("Volume 2 (L/min)", min_value=0, max_value=1000, step=1)
-        volume3 = st.number_input("Volume 3 (L/min)", min_value=0, max_value=1000, step=1)
+        # use slider with 5-unit steps between 100 and 700 to mimic dial
+        volume1 = st.slider("Volume 1 (L/min)", 100, 700, step=5)
+        volume2 = st.slider("Volume 2 (L/min)", 100, 700, step=5)
+        volume3 = st.slider("Volume 3 (L/min)", 100, 700, step=5)
         feeling = st.select_slider("How do you feel?", options=["😫", "😕", "😐", "🙂", "😄"])
         
         submit = st.form_submit_button("Save to Cloud")

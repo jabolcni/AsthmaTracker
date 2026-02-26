@@ -16,8 +16,10 @@ SQLite`, etc.).
 There are no additional setup steps – just install the requirements and
 run `streamlit run app.py`.  The log form now asks for three separate
 volume measurements and a feeling slider; feelings are stored as numbers
-(1‑5) while the UI still shows emojis.  A "Timestamp" and mean volume are
-generated for plotting, and the CSV export includes all raw columns.
+(1‑5) while the UI still shows emojis.  The date and time are entered via a
+single "Date & time" picker (set to CET) so the fields occupy one row on
+mobile. A "Timestamp" and mean volume are generated for plotting, and the
+CSV export includes all raw columns.
 
 ## Requirements
 

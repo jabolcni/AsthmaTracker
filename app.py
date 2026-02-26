@@ -101,14 +101,9 @@ with tab1:
     #st.header("New Reading")
     
     with st.form("input_form", clear_on_submit=True):
-        # date and time on same row to save vertical space
-        col1, col2 = st.columns(2)
-        with col1:
-            date = st.date_input("Date", datetime.date.today())
-        with col2:
-            # default time to current CET (Europe/Prague) regardless of server tz
-            cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
-            time = st.time_input("Time", cet_now.time())
+        # single datetime picker (CET) to keep date+time on one line
+        cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
+        dt = st.datetime_input("Date & time", value=cet_now)
 
         volume1 = st.number_input("Volume 1 (L/min)", min_value=0, max_value=1000, step=1)
         volume2 = st.number_input("Volume 2 (L/min)", min_value=0, max_value=1000, step=1)
@@ -118,10 +113,13 @@ with tab1:
         submit = st.form_submit_button("Save to Cloud")
         
         if submit:
-            # Append new row to the dataframe
+                # Append new row to the dataframe
             # map emoji to numeric scale 1..5
             feeling_map = {"😫": 1, "😕": 2, "😐": 3, "🙂": 4, "😄": 5}
             num = feeling_map.get(feeling, None)
+            # split datetime into date/time strings
+            date = dt.date()
+            time = dt.time()
             new_entry = pd.DataFrame([{"Date": str(date), "Time": str(time),
                                       "Volume1": volume1, "Volume2": volume2,
                                       "Volume3": volume3, "FeelingNum": num}])

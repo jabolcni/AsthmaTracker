@@ -254,18 +254,19 @@ with tab2:
 
         # download excel report
         if not existing_data.empty:
-            output = pd.ExcelWriter("report.xlsx", engine="openpyxl")
-            existing_data.to_excel(output, sheet_name="readings", index=False)
-            ev = _load_events()
-            ev.to_excel(output, sheet_name="events", index=False)
-            output.save()
-            with open("report.xlsx", "rb") as f:
-                btn = st.download_button(
-                    label="Download Excel report",
-                    data=f,
-                    file_name="asthma_report.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
+            from io import BytesIO
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine="openpyxl") as output:
+                existing_data.to_excel(output, sheet_name="readings", index=False)
+                ev = _load_events()
+                ev.to_excel(output, sheet_name="events", index=False)
+            buffer.seek(0)
+            st.download_button(
+                label="Download Excel report",
+                data=buffer,
+                file_name="asthma_report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
         
         # Data Table (Optional)
         with st.expander("View Raw Data"):

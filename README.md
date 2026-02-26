@@ -25,8 +25,18 @@ In the *Trends* tab you can choose between "All time", "Last 30 days", and
 "Last 7 days" ranges.  The chart plots three lines: green represents the
 maximum (highest) of the three trials, red the minimum (lowest), and blue
 is the mean volume.  This gives you a quick visual of your best, worst and
-average performance.  A download button still exports every raw column,
-including the computed `Timestamp`, `Vol_max`, and `Vol_min` fields.
+average performance.  Summary metrics above the chart show the 7‑day and
+30‑day mean volume and the variability score (standard deviation of the
+three trials).
+
+The app now supports *event logging* – use the Expander on the Log Entry
+tab to record illness, exercise, medication, or general notes.  Events
+appear as colored triangles on the trend chart; hover over them to see
+details.
+
+A new "Download Excel report" button generates an `.xlsx` file with two
+sheets (`readings` and `events`) containing all your stored data, making it
+easy to share or archive your logs.
 
 ## Requirements
 

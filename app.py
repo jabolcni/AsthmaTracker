@@ -136,11 +136,33 @@ with tab2:
     if not existing_data.empty:
         # combine Date and Time into a datetimestamp for plotting
         existing_data['Timestamp'] = pd.to_datetime(existing_data['Date'] + ' ' + existing_data['Time'])
-        # compute mean volume across three trials for convenience
+        # compute mean, max, min volumes across three trials
         existing_data['Volume'] = existing_data[["Volume1", "Volume2", "Volume3"]].mean(axis=1)
-        
-        # Simple Line Chart
-        st.line_chart(data=existing_data, x="Timestamp", y="Volume")
+        existing_data['Vol_max'] = existing_data[["Volume1", "Volume2", "Volume3"]].max(axis=1)
+        existing_data['Vol_min'] = existing_data[["Volume1", "Volume2", "Volume3"]].min(axis=1)
+
+        # time-range selector
+        range_option = st.selectbox("Date range", ["All time", "Last 30 days", "Last 7 days"])
+        now = pd.Timestamp.now()
+        if range_option == "Last 30 days":
+            cutoff = now - pd.Timedelta(days=30)
+        elif range_option == "Last 7 days":
+            cutoff = now - pd.Timedelta(days=7)
+        else:
+            cutoff = None
+        if cutoff is not None:
+            plot_data = existing_data[existing_data['Timestamp'] >= cutoff]
+        else:
+            plot_data = existing_data
+
+        # build Altair multi-line chart with colored lines
+        import altair as alt
+        base = alt.Chart(plot_data).encode(x='Timestamp:T')
+        line_mean = base.mark_line(color='blue').encode(y='Volume:Q')
+        line_max = base.mark_line(color='green').encode(y='Vol_max:Q')
+        line_min = base.mark_line(color='red').encode(y='Vol_min:Q')
+        chart = alt.layer(line_max, line_min, line_mean).interactive()
+        st.altair_chart(chart, use_container_width=True)
         
         # Data Table (Optional)
         with st.expander("View Raw Data"):

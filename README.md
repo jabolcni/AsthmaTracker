@@ -19,9 +19,14 @@ volume measurements and a feeling slider; feelings are stored as numbers
 (1‑5) while the UI still shows emojis.  The volume fields use a slider
 that moves in 5‑unit increments from 100 to 700 (emulating the dial used in
 similar apps). The date and time are entered via a single "Date & time"
-picker (set to CET) so the fields occupy one row on mobile. A "Timestamp"
-and mean volume are generated for plotting, and the CSV export includes all
-raw columns.
+picker (set to CET) so the fields occupy one row on mobile. 
+
+In the *Trends* tab you can choose between "All time", "Last 30 days", and
+"Last 7 days" ranges.  The chart plots three lines: green represents the
+maximum (highest) of the three trials, red the minimum (lowest), and blue
+is the mean volume.  This gives you a quick visual of your best, worst and
+average performance.  A download button still exports every raw column,
+including the computed `Timestamp`, `Vol_max`, and `Vol_min` fields.
 
 ## Requirements
 

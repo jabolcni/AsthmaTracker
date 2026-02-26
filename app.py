@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from datetime import timezone
+from zoneinfo import ZoneInfo
 import sqlite3
 
 # App Title & Icon
@@ -57,7 +59,9 @@ with tab1:
     
     with st.form("input_form", clear_on_submit=True):
         date = st.date_input("Date", datetime.date.today())
-        time = st.time_input("Time", datetime.datetime.now().time())
+        # default time to current CET (Europe/Prague) regardless of server tz
+        cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
+        time = st.time_input("Time", cet_now.time())
         volume = st.number_input("Volume (L/min)", min_value=0, max_value=1000, step=10)
         feeling = st.select_slider("How do you feel?", options=["😫", "😕", "😐", "🙂", "😄"])
         

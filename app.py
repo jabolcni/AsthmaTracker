@@ -9,6 +9,7 @@ import sqlite3
 st.set_page_config(page_title="LungLog", page_icon="🫁")
 
 # remove extra top padding/spacing so mobile users don't have to scroll
+# also force date/time inputs to sit side-by-side even on narrow screens
 st.markdown(
     """
     <style>
@@ -19,6 +20,20 @@ st.markdown(
     }
     header {
         margin-top: 0 !important;
+    }
+
+    /* ensure columns don't wrap on mobile and shrink inputs if necessary */
+    @media only screen and (max-width: 600px) {
+        .stColumns {
+            flex-wrap: nowrap !important;
+        }
+        /* force date/time pickers to half-width */
+        div[data-testid="stDateInput"],
+        div[data-testid="stTimeInput"] {
+            display: inline-block !important;
+            width: 48% !important;
+            vertical-align: top;
+        }
     }
     </style>
     """,

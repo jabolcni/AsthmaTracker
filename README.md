@@ -1,8 +1,9 @@
 # AsthmaTracker
 
-This Streamlit application logs asthma readings to a SQLite database
-stored locally in the workspace.  No external cloud service is required;
-your data lives in `data.db` beside the app files.
+This Streamlit application logs asthma readings (date, time, volume,
+and feeling) to a SQLite database stored locally in the workspace.  No
+external cloud service is required; your data lives in `data.db` beside
+the app files.
 
 ## Local storage (no cloud)
 

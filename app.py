@@ -16,24 +16,30 @@ st.title("🫁 LungLog: Asthma Tracker")
 DB_PATH = "data.db"
 _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 
-# create table if it doesn't exist
+# create table if it doesn't exist and ensure time column exists
 with _conn:
     _conn.execute(
         """
         CREATE TABLE IF NOT EXISTS readings (
             Date TEXT,
+            Time TEXT,
             Volume REAL,
             Feeling TEXT
         )
         """
     )
+    # SQLite doesn't support IF NOT EXISTS for ALTER COLUMN, so try/catch
+    try:
+        _conn.execute("ALTER TABLE readings ADD COLUMN Time TEXT")
+    except Exception:
+        pass
 
 
 def _load_data():
     try:
-        df = pd.read_sql_query("SELECT * FROM readings ORDER BY Date", _conn)
+        df = pd.read_sql_query("SELECT * FROM readings ORDER BY Date, Time", _conn)
     except Exception:
-        df = pd.DataFrame(columns=["Date", "Volume", "Feeling"])
+        df = pd.DataFrame(columns=["Date", "Time", "Volume", "Feeling"])
     return df
 
 
@@ -51,6 +57,7 @@ with tab1:
     
     with st.form("input_form", clear_on_submit=True):
         date = st.date_input("Date", datetime.date.today())
+        time = st.time_input("Time", datetime.datetime.now().time())
         volume = st.number_input("Volume (L/min)", min_value=0, max_value=1000, step=10)
         feeling = st.select_slider("How do you feel?", options=["😫", "😕", "😐", "🙂", "😄"])
         
@@ -58,7 +65,7 @@ with tab1:
         
         if submit:
             # Append new row to the dataframe
-            new_entry = pd.DataFrame([{"Date": str(date), "Volume": volume, "Feeling": feeling}])
+            new_entry = pd.DataFrame([{"Date": str(date), "Time": str(time), "Volume": volume, "Feeling": feeling}])
             updated_df = pd.concat([existing_data, new_entry], ignore_index=True)
             
             # Save into local SQLite database
@@ -69,14 +76,24 @@ with tab2:
     st.header("Volume Over Time")
     
     if not existing_data.empty:
-        # Convert Date column to actual datetime for plotting
-        existing_data['Date'] = pd.to_datetime(existing_data['Date'])
+        # combine Date and Time into a datetimestamp for plotting
+        existing_data['Timestamp'] = pd.to_datetime(existing_data['Date'] + ' ' + existing_data['Time'])
         
         # Simple Line Chart
-        st.line_chart(data=existing_data, x="Date", y="Volume")
+        st.line_chart(data=existing_data, x="Timestamp", y="Volume")
         
         # Data Table (Optional)
         with st.expander("View Raw Data"):
-            st.dataframe(existing_data.sort_values(by="Date", ascending=False))
+            st.dataframe(existing_data.sort_values(by=["Date", "Time"], ascending=False))
     else:
         st.info("No data yet. Log your first reading in the first tab!")
+
+    # download button
+    if not existing_data.empty:
+        csv = existing_data.to_csv(index=False)
+        st.download_button(
+            label="Download all data",
+            data=csv,
+            file_name="asthma_readings.csv",
+            mime="text/csv",
+        )

@@ -45,9 +45,26 @@ st.title("🫁 LungLog")
 # ----------
 # local storage
 # ----------
-# use a lightweight SQLite database in the workspace directory so that
-# data persists between Streamlit sessions without any cloud setup.
-DB_PATH = "data.db"
+# allow database to live outside of the repository itself so it is not
+# accidentally deleted when the repo is synced/cleaned.  user can override
+# with the ASTHMA_DB_PATH environment variable.  otherwise use a hidden file
+# in the home directory which is normally persistent.
+def _get_db_path():
+    env = os.environ.get("ASTHMA_DB_PATH")
+    if env:
+        return env
+    return str(Path.home() / ".asthma_tracker.db")
+
+# if an old data.db exists in the repo root (perhaps from earlier versions),
+# move it to the new location on first run so users don't lose entries.
+new_db = _get_db_path()
+if os.path.exists("data.db") and os.path.abspath("data.db") != os.path.abspath(new_db):
+    try:
+        os.replace("data.db", new_db)
+    except Exception:
+        pass
+
+DB_PATH = new_db
 _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 
 # create table if it doesn't exist and migrate columns

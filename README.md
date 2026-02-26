@@ -38,3 +38,10 @@ Pandas, which remain necessary for the UI and data handling.
 > `.gitignore` to prevent your personal entries from being exposed.  If
 > you've already run the app and see `data.db` in `git status`, run
 > ``git rm --cached data.db`` to untrack it.
+>
+> **Persistence**: repository synchronisation (e.g. pulling new commits or
+> rebuilding a Codespace) may delete untracked files. To avoid losing your
+> readings, the app now stores the database outside of the repo by default.
+> It uses `~/.asthma_tracker.db` (home directory) or any path you specify
+> with the `ASTHMA_DB_PATH` environment variable.  If an old `data.db` file
+> exists in the repository root it will automatically be moved on first run.

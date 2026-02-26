@@ -27,3 +27,9 @@ raw columns.
 
 Dependencies are listed in `requirements.txt` and include only Streamlit and
 Pandas, which remain necessary for the UI and data handling.
+
+> **Privacy**: the SQLite database file `data.db` resides in the workspace
+> and is **not committed** to the public repository. It is added to
+> `.gitignore` to prevent your personal entries from being exposed.  If
+> you've already run the app and see `data.db` in `git status`, run
+> ``git rm --cached data.db`` to untrack it.

@@ -18,30 +18,41 @@ st.title("🫁 LungLog: Asthma Tracker")
 DB_PATH = "data.db"
 _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 
-# create table if it doesn't exist and ensure time column exists
+# create table if it doesn't exist and migrate columns
 with _conn:
     _conn.execute(
         """
         CREATE TABLE IF NOT EXISTS readings (
             Date TEXT,
             Time TEXT,
-            Volume REAL,
-            Feeling TEXT
+            Volume1 REAL,
+            Volume2 REAL,
+            Volume3 REAL,
+            FeelingNum INTEGER
         )
         """
     )
-    # SQLite doesn't support IF NOT EXISTS for ALTER COLUMN, so try/catch
-    try:
-        _conn.execute("ALTER TABLE readings ADD COLUMN Time TEXT")
-    except Exception:
-        pass
+    # make sure any missing columns are added (simple PRAGMA introspection)
+    existing_cols = {row[1] for row in _conn.execute("PRAGMA table_info(readings)")}
+    for col_def in [
+        ("Volume1", "REAL"),
+        ("Volume2", "REAL"),
+        ("Volume3", "REAL"),
+        ("FeelingNum", "INTEGER"),
+    ]:
+        if col_def[0] not in existing_cols:
+            try:
+                _conn.execute(f"ALTER TABLE readings ADD COLUMN {col_def[0]} {col_def[1]}")
+            except Exception:
+                pass
+
 
 
 def _load_data():
     try:
         df = pd.read_sql_query("SELECT * FROM readings ORDER BY Date, Time", _conn)
     except Exception:
-        df = pd.DataFrame(columns=["Date", "Time", "Volume", "Feeling"])
+        df = pd.DataFrame(columns=["Date", "Time", "Volume1", "Volume2", "Volume3", "FeelingNum"])
     return df
 
 
@@ -62,14 +73,21 @@ with tab1:
         # default time to current CET (Europe/Prague) regardless of server tz
         cet_now = datetime.datetime.now(ZoneInfo("Europe/Prague"))
         time = st.time_input("Time", cet_now.time())
-        volume = st.number_input("Volume (L/min)", min_value=0, max_value=1000, step=10)
+        volume1 = st.number_input("Volume 1 (L/min)", min_value=0, max_value=1000, step=1)
+        volume2 = st.number_input("Volume 2 (L/min)", min_value=0, max_value=1000, step=1)
+        volume3 = st.number_input("Volume 3 (L/min)", min_value=0, max_value=1000, step=1)
         feeling = st.select_slider("How do you feel?", options=["😫", "😕", "😐", "🙂", "😄"])
         
         submit = st.form_submit_button("Save to Cloud")
         
         if submit:
             # Append new row to the dataframe
-            new_entry = pd.DataFrame([{"Date": str(date), "Time": str(time), "Volume": volume, "Feeling": feeling}])
+            # map emoji to numeric scale 1..5
+            feeling_map = {"😫": 1, "😕": 2, "😐": 3, "🙂": 4, "😄": 5}
+            num = feeling_map.get(feeling, None)
+            new_entry = pd.DataFrame([{"Date": str(date), "Time": str(time),
+                                      "Volume1": volume1, "Volume2": volume2,
+                                      "Volume3": volume3, "FeelingNum": num}])
             updated_df = pd.concat([existing_data, new_entry], ignore_index=True)
             
             # Save into local SQLite database
@@ -82,6 +100,8 @@ with tab2:
     if not existing_data.empty:
         # combine Date and Time into a datetimestamp for plotting
         existing_data['Timestamp'] = pd.to_datetime(existing_data['Date'] + ' ' + existing_data['Time'])
+        # compute mean volume across three trials for convenience
+        existing_data['Volume'] = existing_data[["Volume1", "Volume2", "Volume3"]].mean(axis=1)
         
         # Simple Line Chart
         st.line_chart(data=existing_data, x="Timestamp", y="Volume")

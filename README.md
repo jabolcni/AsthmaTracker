@@ -1,9 +1,9 @@
 # AsthmaTracker
 
-This Streamlit application logs asthma readings (date, time, volume,
-and feeling) to a SQLite database stored locally in the workspace.  No
-external cloud service is required; your data lives in `data.db` beside
-the app files.
+This Streamlit application logs asthma readings (date, time, three volume trials, and a
+numeric feeling score) to a SQLite database stored locally in the
+workspace.  No external cloud service is required; your data lives in
+`data.db` beside the app files.
 
 ## Local storage (no cloud)
 
@@ -13,8 +13,11 @@ already exist, and every new entry is saved into that table.  You can view or
 edit the database with any SQLite client (e.g. `sqlite3`, `DB Browser for
 SQLite`, etc.).
 
-There are no additional setup steps – just install the requirements and run
-`streamlit run app.py`.
+There are no additional setup steps – just install the requirements and
+run `streamlit run app.py`.  The log form now asks for three separate
+volume measurements and a feeling slider; feelings are stored as numbers
+(1‑5) while the UI still shows emojis.  A "Timestamp" and mean volume are
+generated for plotting, and the CSV export includes all raw columns.
 
 ## Requirements
 

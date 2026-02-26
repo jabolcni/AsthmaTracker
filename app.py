@@ -31,7 +31,7 @@ st.markdown(
         div[data-testid="stDateInput"],
         div[data-testid="stTimeInput"] {
             display: inline-block !important;
-            width: 48% !important;
+            width: 33% !important;
             vertical-align: top;
         }
     }

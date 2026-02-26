@@ -8,7 +8,7 @@ import sqlite3
 # App Title & Icon
 st.set_page_config(page_title="LungLog", page_icon="🫁")
 
-st.title("🫁 LungLog: Asthma Tracker")
+st.title("🫁 LungLog")
 
 # ----------
 # local storage
@@ -66,7 +66,7 @@ existing_data = _load_data()
 tab1, tab2 = st.tabs(["📝 Log Entry", "📈 Trends"])
 
 with tab1:
-    st.header("New Reading")
+    #st.header("New Reading")
     
     with st.form("input_form", clear_on_submit=True):
         date = st.date_input("Date", datetime.date.today())

@@ -8,6 +8,23 @@ import sqlite3
 # App Title & Icon
 st.set_page_config(page_title="LungLog", page_icon="🫁")
 
+# remove extra top padding/spacing so mobile users don't have to scroll
+st.markdown(
+    """
+    <style>
+    /* generic rules; streamlit class names may change, so keep selectors broad */
+    .css-1d391kg, .css-18e3th9, .reportview-container .main > div {
+        padding-top: 0rem !important;
+        margin-top: 0rem !important;
+    }
+    header {
+        margin-top: 0 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🫁 LungLog")
 
 # ----------

@@ -83,6 +83,17 @@ with _conn:
         )
         """
     )
+    # events table for comments/illness/exercise
+    _conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS events (
+            Date TEXT,
+            Time TEXT,
+            Type TEXT,
+            Notes TEXT
+        )
+        """
+    )
     # make sure any missing columns are added (simple PRAGMA introspection)
     existing_cols = {row[1] for row in _conn.execute("PRAGMA table_info(readings)")}
     for col_def in [
@@ -105,6 +116,24 @@ def _load_data():
     except Exception:
         df = pd.DataFrame(columns=["Date", "Time", "Volume1", "Volume2", "Volume3", "FeelingNum"])
     return df
+
+
+def _load_events():
+    try:
+        ev = pd.read_sql_query("SELECT * FROM events ORDER BY Date, Time", _conn)
+    except Exception:
+        ev = pd.DataFrame(columns=["Date", "Time", "Type", "Notes"])
+    return ev
+
+
+def _save_events(df: pd.DataFrame):
+    df.to_sql("events", _conn, index=False, if_exists="replace")
+
+
+def _append_event(row: dict):
+    ev = _load_events()
+    ev = pd.concat([ev, pd.DataFrame([row])], ignore_index=True)
+    _save_events(ev)
 
 
 def _save_data(df: pd.DataFrame):
@@ -149,6 +178,20 @@ with tab1:
             _save_data(updated_df)
             st.success("Data logged successfully!")
 
+    # event logging area
+    with st.expander("Log event (illness, exercise, notes)"):
+        with st.form("event_form", clear_on_submit=True):
+            ev_dt = st.datetime_input("Event date & time", value=cet_now)
+            ev_type = st.selectbox("Type", ["Illness", "Exercise", "Medication", "Note"])
+            ev_notes = st.text_area("Details", "")
+            submit_ev = st.form_submit_button("Add event")
+            if submit_ev:
+                edate = ev_dt.date()
+                etime = ev_dt.time()
+                _append_event({"Date": str(edate), "Time": str(etime),
+                               "Type": ev_type, "Notes": ev_notes})
+                st.success("Event saved!")
+
 with tab2:
     st.header("Volume Over Time")
     
@@ -174,14 +217,55 @@ with tab2:
         else:
             plot_data = existing_data
 
-        # build Altair multi-line chart with colored lines
+        # compute summary statistics
+        mean7 = plot_data['Volume'].tail(7*1).mean() if not plot_data.empty else float('nan')
+        mean30 = plot_data['Volume'].tail(30*1).mean() if not plot_data.empty else float('nan')
+        # variability: average standard deviation of three trials
+        variability = plot_data[["Volume1","Volume2","Volume3"]].std(axis=1).mean() if not plot_data.empty else float('nan')
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Avg (7d)", f"{mean7:.1f}" if not pd.isna(mean7) else "-")
+        col2.metric("Avg (30d)", f"{mean30:.1f}" if not pd.isna(mean30) else "-")
+        col3.metric("Variability", f"{variability:.1f}" if not pd.isna(variability) else "-")
+
+        # build Altair multi-line chart with colored lines and events
         import altair as alt
         base = alt.Chart(plot_data).encode(x='Timestamp:T')
         line_mean = base.mark_line(color='blue').encode(y='Volume:Q')
         line_max = base.mark_line(color='green').encode(y='Vol_max:Q')
         line_min = base.mark_line(color='red').encode(y='Vol_min:Q')
-        chart = alt.layer(line_max, line_min, line_mean).interactive()
+        layers = [line_max, line_min, line_mean]
+        # load events and add points/rules
+        events = _load_events()
+        if not events.empty:
+            events['Timestamp'] = pd.to_datetime(events['Date'] + ' ' + events['Time'])
+            if cutoff is not None:
+                ev_plot = events[events['Timestamp'] >= cutoff]
+            else:
+                ev_plot = events
+            if not ev_plot.empty:
+                evt = alt.Chart(ev_plot).mark_point(shape='triangle', size=100).encode(
+                    x='Timestamp:T',
+                    tooltip=['Type', 'Notes'],
+                    color=alt.Color('Type:N', legend=alt.Legend(title='Event'))
+                )
+                layers.append(evt)
+        chart = alt.layer(*layers).interactive()
         st.altair_chart(chart, use_container_width=True)
+
+        # download excel report
+        if not existing_data.empty:
+            output = pd.ExcelWriter("report.xlsx", engine="openpyxl")
+            existing_data.to_excel(output, sheet_name="readings", index=False)
+            ev = _load_events()
+            ev.to_excel(output, sheet_name="events", index=False)
+            output.save()
+            with open("report.xlsx", "rb") as f:
+                btn = st.download_button(
+                    label="Download Excel report",
+                    data=f,
+                    file_name="asthma_report.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
         
         # Data Table (Optional)
         with st.expander("View Raw Data"):
